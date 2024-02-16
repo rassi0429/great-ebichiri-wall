@@ -1,12 +1,8 @@
+import { hasBadWords } from "./libs/hasBadWords";
+
 export interface Env {
   KV: KVNamespace;
 }
-
-const hasBadWords = (text: string, badWords: string[]) => {
-  // 対策用の区切り文字などを削除して判定する
-  const normalizedText = text.replace(/[ /　／]/g, '');
-  return badWords.length > 0 && badWords.some(word => normalizedText.includes(word));
-};
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
@@ -44,9 +40,10 @@ export default {
 
     // NGワードを含む場合はエラーで弾く
     if (hasBadWords(body, badWords)) {
+      const message = (await env.KV.get('errorMessage') ?? 'その投稿には不適切な単語が含まれています。')
       return new Response(JSON.stringify({
         error: {
-          message: 'その投稿には不適切な単語が含まれています。',
+          message: message,
           code: 'BAD_WORDS',
           id: 'c1d9e31a-85ee-45b9-9456-7c749fc4f475',
         }
